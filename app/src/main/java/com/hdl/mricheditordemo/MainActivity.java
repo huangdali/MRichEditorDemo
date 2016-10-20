@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private MRichEditor editor;
-    private EditText etTitle;
+    private MRichEditor editor;//编辑器
+    private EditText etTitle;//文章标题对象
     private static final String BASE_URL = "http://192.168.2.153:8080/MRichEditorDemoServer/upload.action";//文件上传的接口
     private static final String IMG_URL = "http://192.168.2.153:8080/MRichEditorDemoServer/upload";//文件存放的路径
 
@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         /**
-         * 请求所有必要的权限----
+         * 请求所有必要的权限----android6.0必须要动态申请权限,否则选择照片和拍照功能 用不了哦
          */
         PermissionsManager.getInstance().requestAllManifestPermissionsIfNecessary(this, new PermissionsResultAction() {
             @Override
@@ -45,13 +45,13 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        initMyRichEditor();
+        initMRichEditor();//初始化编辑器
     }
 
     /**
      * 初始化富文本编辑器
      */
-    private void initMyRichEditor() {
+    private void initMRichEditor() {
         etTitle = (EditText) findViewById(R.id.et_main_title);
         editor = (MRichEditor) findViewById(R.id.mre_editor);
         editor.setServerImgDir(IMG_URL);//设置图片存放的路径
@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 需要重写这个方法
+     * 需要重写这个方法,并且加上下面的判断(照写即可)
      *
      * @param requestCode
      * @param resultCode
@@ -117,24 +117,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 完成按钮
+     * 完成按钮---将文件和图片提交到服务器
      *
      * @param view
      */
     public void onFinished(View view) {
-        editor.setHtmlTitle(etTitle.getText().toString().trim());//设置html的标题
-        editor.createHtmlStr();//创建html字符串
-        List<File> fileList = new ArrayList<>();
+        editor.setHtmlTitle(etTitle.getText().toString().trim());//设置html的标题,在创建html文件之前,需要将文章的标题(即title标签)设置进去,之后设置无效.
+        editor.createHtmlStr();//创建html字符串,会返回一个html字符串.[必须调用,否则内容为空]
         File file = editor.getHtmlFile("sdcard/test.html");//创建html文件,并设置保存的路径
+        //添加List<File>的文件列表,用于MyHttpUtils多文件上传的参数.
+        List<File> fileList = new ArrayList<>();
         fileList.add(file);
         for (String filePath : editor.getImgPath()) {
             fileList.add(new File(filePath));
         }
+        //MyHttpUtils网络请求框架,详细使用介绍:http://blog.csdn.net/qq137722697/article/details/52843336 .
         new MyHttpUtils()
-                .url(BASE_URL)
-                .addUploadFiles(fileList)
-                .setJavaBean(UploadResult.class)
-                .uploadFileMult(new CommCallback<UploadResult>() {
+                .url(BASE_URL)//文件上传的接口 (url)
+                .addUploadFiles(fileList)//需上传的多个文件
+                .setJavaBean(UploadResult.class)//上传完成返回的json格式的数据对应的javabean对象
+                .uploadFileMult(new CommCallback<UploadResult>() {//执行多文件上传任务
                     @Override
                     public void onSucess(UploadResult uploadResult) {//成功之后回调
                         Toast.makeText(MainActivity.this, uploadResult.getMessage(), Toast.LENGTH_SHORT).show();
@@ -148,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 上传图片
+     * 上传图片(这里用于实时预览,上传了图片才可以预览哦,否则看不到图片,只能看见文字)
      */
     private void uploadImg() {
         List<File> fileList = new ArrayList<>();
