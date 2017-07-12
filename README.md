@@ -1,4 +1,7 @@
-#[android开源]简单富文本编辑器MRichEditor，图文混排算个啥
+> 另个富文本编辑器：https://github.com/huangdali/HRichEditor
+
+
+# [android开源]简单富文本编辑器MRichEditor，图文混排算个啥
 尊重原创，转载请注明出处，原文地址： http://blog.csdn.net/qq137722697
 ##一、前言
 
